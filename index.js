@@ -45,6 +45,20 @@ async function run() {
 
     // get volunteers using sort and limits
 
+    app.get("/limited-volunteers", async (req, res) => {
+      try {
+        const result = await volunteerCollection
+          .find()
+          .sort({ deadline: 1 })
+          .limit(6)
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching limited volunteers:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
