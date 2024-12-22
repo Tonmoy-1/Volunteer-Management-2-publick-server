@@ -28,6 +28,9 @@ const client = new MongoClient(uri, {
 const volunteerCollection = client
   .db("VolunteerCollection")
   .collection("volunteers");
+const requestedVolunteerCollection = client
+  .db("VolunteerCollection")
+  .collection("Be-volunteers");
 
 async function run() {
   try {
@@ -40,6 +43,14 @@ async function run() {
     app.post("/all-volunteers", async (req, res) => {
       const volunteerData = req.body;
       const result = await volunteerCollection.insertOne(volunteerData);
+      res.send(result);
+    });
+    // set all requested volunteers
+    app.post("/requested-volunteer", async (req, res) => {
+      const requestvolunteerData = req.body;
+      const result = await requestedVolunteerCollection.insertOne(
+        requestvolunteerData
+      );
       res.send(result);
     });
 
