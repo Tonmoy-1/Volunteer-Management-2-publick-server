@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
@@ -24,12 +25,26 @@ const client = new MongoClient(uri, {
   },
 });
 
+const volunteerCollection = client
+  .db("VolunteerCollection")
+  .collection("volunteers");
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
+
+    // set all volunteers
+    app.post("/all-volunteers", async (req, res) => {
+      const volunteerData = req.body;
+      const result = await volunteerCollection.insertOne(volunteerData);
+      res.send(result);
+    });
+
+    // get volunteers using sort and limits
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
