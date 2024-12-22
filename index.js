@@ -70,6 +70,16 @@ async function run() {
       }
     });
 
+    // get all volunteer need posts
+    app.get("/all-volunteers", async (req, res) => {
+      try {
+        const result = await volunteerCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     // get specific volunteer details for volunteer details page
 
     app.get("/volunteer-details/:id", async (req, res) => {
