@@ -101,6 +101,25 @@ async function run() {
       res.send(result);
     });
 
+    // update a specific data
+    // update a single post
+
+    app.put("/update-data", async (req, res) => {
+      const id = req.query.id;
+      const updateData = req.body;
+      const updated = {
+        $set: updateData,
+      };
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const result = await volunteerCollection.updateOne(
+        query,
+        updated,
+        options
+      );
+      res.send(result);
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
