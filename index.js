@@ -101,11 +101,18 @@ async function run() {
       res.send(result);
     });
 
-    // update a specific data
-    // update a single post
+    // get a specific data for update data
+    app.get("/update-data/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await volunteerCollection.findOne(query);
+      res.send(result);
+    });
 
-    app.put("/update-data", async (req, res) => {
-      const id = req.query.id;
+    // update a specific data
+
+    app.put("/update-data/:id", async (req, res) => {
+      const id = req.params.id;
       const updateData = req.body;
       const updated = {
         $set: updateData,
@@ -119,7 +126,13 @@ async function run() {
       );
       res.send(result);
     });
-
+    // delete a data
+    // app.delete("/job/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await jobCollection.deleteOne(query);
+    //   res.send(result);
+    // });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
