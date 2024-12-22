@@ -92,6 +92,15 @@ async function run() {
       res.send(result);
     });
 
+    // get my Vlounteer need post data using email query
+
+    app.get("/myvolunteer-needposts", async (req, res) => {
+      const email = req.query.email;
+      const query = { organizerEmail: email };
+      const result = await volunteerCollection.find(query).toArray();
+      res.send(result);
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
