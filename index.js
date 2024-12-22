@@ -72,12 +72,15 @@ async function run() {
 
     // get all volunteer need posts
     app.get("/all-volunteers", async (req, res) => {
-      try {
-        const result = await volunteerCollection.find().toArray();
-        res.send(result);
-      } catch (error) {
-        res.status(500).send("Internal Server Error");
-      }
+      const search = req.query.search;
+      let query = {
+        postTitle: {
+          $regex: search,
+          $options: "i",
+        },
+      };
+      const result = await volunteerCollection.find(query).toArray();
+      res.send(result);
     });
 
     // get specific volunteer details for volunteer details page
