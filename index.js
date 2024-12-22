@@ -1,7 +1,7 @@
 const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // create app
 const port = process.env.PORT || 7000;
@@ -57,6 +57,15 @@ async function run() {
         console.error("Error fetching limited volunteers:", error);
         res.status(500).send("Internal Server Error");
       }
+    });
+
+    // get specific volunteer details for volunteer details page
+
+    app.get("/volunteer-details/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await volunteerCollection.findOne(query);
+      res.send(result);
     });
 
     console.log(
