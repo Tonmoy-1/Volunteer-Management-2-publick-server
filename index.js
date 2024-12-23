@@ -133,6 +133,18 @@ async function run() {
       const result = await volunteerCollection.deleteOne(query);
       res.send(result);
     });
+
+    // get data for my request for be a volunteer
+    app.get("/my-request", async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      const query = {
+        volunteerEmail: email,
+      };
+      const result = await requestedVolunteerCollection.find(query).toArray();
+      res.send(result);
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
