@@ -48,8 +48,30 @@ async function run() {
     // set all requested volunteers
     app.post("/requested-volunteer", async (req, res) => {
       const requestvolunteerData = req.body;
+      //if a user placed a bid alrady in this jo
+      const query = {
+        volunteerEmail: requestvolunteerData.volunteerEmail,
+        volunteerPostId: requestvolunteerData.volunteerPostId,
+      };
+      const alreadyExist = await requestedVolunteerCollection.findOne(query);
+      if (alreadyExist) return res.status(400).send("You Allready Requested");
+
       const result = await requestedVolunteerCollection.insertOne(
         requestvolunteerData
+      );
+
+      // Update Volunteer Needed
+      const filter = {
+        _id: new ObjectId(requestvolunteerData.volunteerPostId),
+      };
+      const update = {
+        $inc: {
+          volunteersNeeded: -1,
+        },
+      };
+      const UpadateVolunteersNeeded = await volunteerCollection.updateOne(
+        filter,
+        update
       );
       res.send(result);
     });
@@ -137,11 +159,18 @@ async function run() {
     // get data for my request for be a volunteer
     app.get("/my-request", async (req, res) => {
       const email = req.query.email;
-      console.log(email);
       const query = {
         volunteerEmail: email,
       };
       const result = await requestedVolunteerCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // cancel a request for manage be a volunteer
+    app.delete("/my-request/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await requestedVolunteerCollection.deleteOne(query);
       res.send(result);
     });
 
