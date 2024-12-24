@@ -1,15 +1,23 @@
 const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-
+const cookieParser = require("cookie-parser");
 // create app
 const port = process.env.PORT || 7000;
 const app = express();
 
 // uses
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5174", "http://localhost:5173"],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 
 // setup mongo db
 
@@ -25,6 +33,19 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyToken = (req, res, next) => {
+  const token = req.cookies?.token;
+  console.log(token);
+  if (!token) return res.status(401).send({ message: "Unauthorized Access" });
+  jwt.verify(token, process.env.JWT_SECRET_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized Access" });
+    }
+    req.user = decoded;
+  });
+  next();
+};
+
 const volunteerCollection = client
   .db("VolunteerCollection")
   .collection("volunteers");
@@ -38,6 +59,32 @@ async function run() {
     // await client.connect();
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
+
+    // jwt
+    app.post("/jwt", async (req, res) => {
+      const email = req.body;
+      const token = jwt.sign(email, process.env.JWT_SECRET_TOKEN, {
+        expiresIn: "24hr",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
+    // remove token from brouser  cookie
+    app.get("/logout", async (req, res) => {
+      res
+        .clearCookie("token", {
+          maxAge: 0,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
 
     // set all volunteers
     app.post("/all-volunteers", async (req, res) => {
@@ -116,8 +163,11 @@ async function run() {
 
     // get my Vlounteer need post data using email query
 
-    app.get("/myvolunteer-needposts", async (req, res) => {
+    app.get("/myvolunteer-needposts", verifyToken, async (req, res) => {
       const email = req.query.email;
+      const decodedEmail = req.user?.email;
+      if (decodedEmail !== email)
+        return res.status(401).send({ message: "Unauthorized Access" });
       const query = { organizerEmail: email };
       const result = await volunteerCollection.find(query).toArray();
       res.send(result);
@@ -132,7 +182,6 @@ async function run() {
     });
 
     // update a specific data
-
     app.put("/update-data/:id", async (req, res) => {
       const id = req.params.id;
       const updateData = req.body;
@@ -157,8 +206,11 @@ async function run() {
     });
 
     // get data for my request for be a volunteer
-    app.get("/my-request", async (req, res) => {
+    app.get("/my-request", verifyToken, async (req, res) => {
       const email = req.query.email;
+      const decodedEmail = req.user?.email;
+      if (decodedEmail !== email)
+        return res.status(401).send({ message: "Unauthorized Access" });
       const query = {
         volunteerEmail: email,
       };
