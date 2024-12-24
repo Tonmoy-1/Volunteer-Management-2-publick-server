@@ -11,7 +11,12 @@ const app = express();
 // uses
 app.use(
   cors({
-    origin: ["http://localhost:5174", "http://localhost:5173"],
+    origin: [
+      "http://localhost:5174",
+      "http://localhost:5173",
+      "https://volunteer-connect-793ad.web.app",
+      "https://volunteer-connect-793ad.firebaseapp.com",
+    ],
     credentials: true,
     optionsSuccessStatus: 200,
   })
