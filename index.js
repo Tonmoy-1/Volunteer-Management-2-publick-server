@@ -40,15 +40,14 @@ const client = new MongoClient(uri, {
 
 const verifyToken = (req, res, next) => {
   const token = req.cookies?.token;
-  console.log(token);
   if (!token) return res.status(401).send({ message: "Unauthorized Access" });
   jwt.verify(token, process.env.JWT_SECRET_TOKEN, (err, decoded) => {
     if (err) {
       return res.status(401).send({ message: "Unauthorized Access" });
     }
     req.user = decoded;
+    next();
   });
-  next();
 };
 
 const volunteerCollection = client
@@ -81,13 +80,10 @@ async function run() {
     });
 
     // remove token from brouser  cookie
-    app.get("/logout", async (req, res) => {
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
       res
-        .clearCookie("token", {
-          maxAge: 0,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        })
+        .clearCookie("token", { maxAge: 0, sameSite: "none", secure: true })
         .send({ success: true });
     });
 
@@ -159,8 +155,12 @@ async function run() {
 
     // get specific volunteer details for volunteer details page
 
-    app.get("/volunteer-details/:id", async (req, res) => {
+    app.get("/volunteer-details/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
+      const email = req.query.email;
+      const decodedEmail = req.user?.email;
+      if (decodedEmail !== email)
+        return res.status(401).send({ message: "Unauthorized Access" });
       const query = { _id: new ObjectId(id) };
       const result = await volunteerCollection.findOne(query);
       res.send(result);
@@ -171,16 +171,22 @@ async function run() {
     app.get("/myvolunteer-needposts", verifyToken, async (req, res) => {
       const email = req.query.email;
       const decodedEmail = req.user?.email;
-      if (decodedEmail !== email)
+      if (decodedEmail !== email) {
         return res.status(401).send({ message: "Unauthorized Access" });
-      const query = { organizerEmail: email };
-      const result = await volunteerCollection.find(query).toArray();
-      res.send(result);
+      } else {
+        const query = { organizerEmail: email };
+        const result = await volunteerCollection.find(query).toArray();
+        res.send(result);
+      }
     });
 
     // get a specific data for update data
-    app.get("/update-data/:id", async (req, res) => {
+    app.get("/update-data/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
+      const email = req.query.email;
+      const decodedEmail = req.user?.email;
+      if (decodedEmail !== email)
+        return res.status(401).send({ message: "Unauthorized Access" });
       const query = { _id: new ObjectId(id) };
       const result = await volunteerCollection.findOne(query);
       res.send(result);
@@ -214,13 +220,15 @@ async function run() {
     app.get("/my-request", verifyToken, async (req, res) => {
       const email = req.query.email;
       const decodedEmail = req.user?.email;
-      if (decodedEmail !== email)
+      if (decodedEmail !== email) {
         return res.status(401).send({ message: "Unauthorized Access" });
-      const query = {
-        volunteerEmail: email,
-      };
-      const result = await requestedVolunteerCollection.find(query).toArray();
-      res.send(result);
+      } else {
+        const query = {
+          volunteerEmail: email,
+        };
+        const result = await requestedVolunteerCollection.find(query).toArray();
+        res.send(result);
+      }
     });
 
     // cancel a request for manage be a volunteer
